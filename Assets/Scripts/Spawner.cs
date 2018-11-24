@@ -26,11 +26,11 @@ public class Spawner : MonoBehaviour
 
     }
 
-    public async Task AnswerAndSpawn(Direction direction, Relation answer)
+    public async Task AnswerAndSpawn(Direction direction, Relation answer, int nextNumber)
     {
         await board.StartSwipe(direction, duration);
         placer.RemoveAllMarbles();
         await board.Spawn(0.2f);
-        placer.Refresh();
+        placer.PlaceMarbles(nextNumber);
     }
 }

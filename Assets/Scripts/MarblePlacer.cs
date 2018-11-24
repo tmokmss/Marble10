@@ -48,9 +48,10 @@ public class MarblePlacer : MonoBehaviour
         children.ForEach(child => Destroy(child.gameObject));
     }
 
-    void PlaceMarbles(int iconNum)
+    public void PlaceMarbles(int iconNum)
     {
-        var size = Vector3.Scale(marblePrefab.GetComponent<Renderer>().bounds.size, marblePrefab.transform.localScale);
+        //var size = Vector3.Scale(marblePrefab.GetComponent<Renderer>().bounds.size, marblePrefab.transform.localScale);
+        var size = new Vector2();
         for (var i = 0; i < iconNum; i++)
         {
             var icon = Instantiate(marblePrefab, transform);
