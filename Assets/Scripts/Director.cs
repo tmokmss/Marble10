@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class Director : MonoBehaviour
@@ -10,6 +11,11 @@ public class Director : MonoBehaviour
     [SerializeField] Spawner spawner;
     [SerializeField] TextManager textManager;
     [SerializeField] Examiner examiner;
+    [SerializeField] AudioManager audioManager;
+    [SerializeField] ProgressManager progressManager;
+
+    readonly float MaxTime = 10f;
+    readonly int InitialLevel = 3;
 
     GameState state;
     int currentLevel;
@@ -45,19 +51,23 @@ public class Director : MonoBehaviour
                 break;
             case GameState.JustStarted:
                 StartPlaying();
+                audioManager.StartBGM();
                 state = GameState.InTenSeconds;
                 break;
             case GameState.InTenSeconds:
                 var elapsed = UpdateTime();
                 if (elapsed)
                 {
-                    state = GameState.StageFinished;
+                    // 規定回数正解することなく10秒経過した
+                    state = GameState.GameOver;
                 }
 
                 break;
             case GameState.StageFinished:
-                LevelUp();
-                state = GameState.InTenSeconds;
+                var task = LevelUp();
+                break;
+            case GameState.DuringLevelUp:
+
                 break;
             case GameState.StageCleared:
                 break;
@@ -81,29 +91,44 @@ public class Director : MonoBehaviour
 
     void StartPlaying()
     {
-        currentLevel = 2;
-        LevelUp();
-        timeLeft = 10f;
+        currentLevel = InitialLevel;
+        StartLevel();
     }
 
-    void LevelUp()
+    async Task LevelUp()
     {
+        state = GameState.DuringLevelUp;
+        await textManager.ShowLevelUp(1.3f);
+
         currentLevel++;
-        textManager.SetLevel(currentLevel);
-        examiner.CurrentLevel = currentLevel;
-        timeLeft = 10f;
+        StartLevel();
+        state = GameState.InTenSeconds;
     }
 
-    public void Input(Direction direction)
+    void StartLevel()
+    {
+        textManager.SetLevel(currentLevel);
+        var next = examiner.NextQuestion(currentLevel);
+
+        progressManager.ResetProgress();
+        timeLeft = MaxTime;
+        state = GameState.InTenSeconds;
+        var task = spawner.Spawn(next);
+    }
+
+    public async Task Input(Direction direction)
     {
         var relation = directionMap[direction];
         var result = examiner.Answer(relation);
-        var next = examiner.NextQuestion(currentLevel);
-        var task = spawner.AnswerAndSpawn(direction, relation, next);
-        ProcessResult(result);
+        var nextMarbleNum = examiner.NextQuestion(currentLevel);
+        var goNextLevel = ProcessResult(result);
+
+        await spawner.Answer(direction, relation);
+        if (!goNextLevel)
+            await spawner.Spawn(nextMarbleNum);
     }
 
-    void ProcessResult(Result result)
+    bool ProcessResult(Result result)
     {
         if (result == Result.Correct)
         {
@@ -112,7 +137,14 @@ public class Director : MonoBehaviour
         {
             currentCombo = 0;
         }
-        textManager.SetCombo(currentCombo);
+        audioManager.PlayAnswer(result);
+        var next = progressManager.SetProgress(result);
+        if (next)
+        {
+            state = GameState.StageFinished;
+        }
+
+        return next;
     }
 }
 
@@ -123,6 +155,7 @@ enum GameState
     InTenSeconds,
     StageFinished,
     StageCleared,
+    DuringLevelUp,
     GameOver,
     Result,
 }

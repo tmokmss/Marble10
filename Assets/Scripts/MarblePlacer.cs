@@ -6,10 +6,9 @@ using UnityEngine;
 public class MarblePlacer : MonoBehaviour
 {
     [SerializeField] GameObject marblePrefab;
-    [SerializeField] int itemNumber;
     [SerializeField] Board board;
 
-    int itemNumber_old;
+    int itemNumber;
 
     // Use this for initialization
     void Start()
@@ -19,21 +18,6 @@ public class MarblePlacer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (itemNumber_old == itemNumber) return;
-
-        Refresh();
-
-        itemNumber_old = itemNumber;
-    }
-
-    public void Increment()
-    {
-        itemNumber++;
-    }
-
-    public void Decrement()
-    {
-        itemNumber = itemNumber <= 1 ? 1 : --itemNumber;
     }
 
     public void Refresh()

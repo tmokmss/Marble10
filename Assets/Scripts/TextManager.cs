@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System.Threading.Tasks;
 
 public class TextManager : MonoBehaviour
 {
     [SerializeField] TextMeshProUGUI comboText;
     [SerializeField] TextMeshProUGUI timeText;
     [SerializeField] TextMeshProUGUI instructionText;
+    [SerializeField] TextMeshProUGUI levelUpText;
 
     Vector3 comboTextInitialPosition;
     Vector3 timeTextInitialPosition;
@@ -50,6 +52,26 @@ public class TextManager : MonoBehaviour
         instructionText.SetText($"||\n< {currentLevel} <");
     }
 
+    public async Task ShowLevelUp(float duration)
+    {
+        levelUpText.enabled = true;
+        // 位置振動させるか
+        var initialPos = levelUpText.transform.position;
+        var start = Time.time;
+        while (true)
+        {
+            var progress = (Time.time - start) / duration;
+            levelUpText.transform.position = initialPos + new Vector3(0, Beat.Sine(0, 0.2f), 1);
+            if (progress >= 1)
+            {
+                break;
+            }
+            await new WaitForEndOfFrame();
+        }
+        levelUpText.enabled = false;
+        levelUpText.transform.position = initialPos;
+    }
+
     void DopeBeat()
     {
         var dilate = Beat.Sine(0.05f, 0.15f);
@@ -60,9 +82,9 @@ public class TextManager : MonoBehaviour
         // Screen Space - CameraでCanvasを描画するようにしたら必要になった
         var posDiff = new Vector3(0, Beat.Sine(0, 0.10f), 1);
         comboText.transform.position = comboTextInitialPosition + posDiff;
-        timeText.transform.position = timeTextInitialPosition +  posDiff;
+        timeText.transform.position = timeTextInitialPosition + posDiff;
         instructionText.transform.position = instructionTextInitialPosition + new Vector3(0, 0, 1);
 
-        instructionText.fontSize = instructionTextInitialSize +  Beat.Sine(0, 2);
+        instructionText.fontSize = instructionTextInitialSize + Beat.Sine(0, 2);
     }
 }

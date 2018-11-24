@@ -37,17 +37,9 @@ public class InputManager : MonoBehaviour
             {
                 placer.Refresh();
             }
-            if (Input.GetKeyDown(KeyCode.Alpha1))
-            {
-                placer.Increment();
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                placer.Decrement();
-            }
         }
 
-        var inputDirection = keyMap.Keys.Where(key => Input.GetKeyDown(key)).Select(key => keyMap[key]).ToList();
-        inputDirection.ForEach(direction => director.Input(direction));
+        var inputDirection = keyMap.Keys.Where(key => Input.GetKeyDown(key)).Select(key => keyMap[key])
+            .Take(1).Select(dir=>director.Input(dir)).ToList();
     }
 }

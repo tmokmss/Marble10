@@ -4,8 +4,7 @@ using UnityEngine;
 
 public class Examiner : MonoBehaviour
 {
-    public int CurrentLevel { set; get; }
-
+    int CurrentLevel;
     int comboCount;
     int currentMarbleCount;
 
@@ -21,6 +20,11 @@ public class Examiner : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="nextLevel">次の質問のレベル</param>
+    /// <returns>実際に表示するマーブルの数</returns>
     public int NextQuestion(int nextLevel)
     {
         CurrentLevel = nextLevel;
