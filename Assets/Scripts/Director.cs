@@ -10,15 +10,16 @@ public class Director : MonoBehaviour
 
     [SerializeField] Spawner spawner;
     [SerializeField] TextManager textManager;
-    [SerializeField] Examiner examiner;
     [SerializeField] AudioManager audioManager;
     [SerializeField] ProgressManager progressManager;
+    [SerializeField] RankingManager rankingManager;
 
     readonly float MaxTime = 10f;
-    readonly int InitialLevel = 3;
+    readonly int InitialLevel = 4;
 
     GameState state;
-    int currentLevel;
+    Scorer score;
+    Examiner examiner;
     int currentCombo;
     Dictionary<Direction, Relation> directionMap;
     float timeLeft;
@@ -47,10 +48,9 @@ public class Director : MonoBehaviour
         switch (state)
         {
             case GameState.Waiting:
-                state = GameState.JustStarted;
                 break;
             case GameState.JustStarted:
-                StartPlaying();
+                InitializeGame();
                 audioManager.StartBGM();
                 state = GameState.InTenSeconds;
                 break;
@@ -61,21 +61,30 @@ public class Director : MonoBehaviour
                     // 規定回数正解することなく10秒経過した
                     state = GameState.GameOver;
                 }
-
                 break;
-            case GameState.StageFinished:
-                var task = LevelUp();
+            case GameState.LevelCleared:
+                LevelUp().WrapErrors();
                 break;
-            case GameState.DuringLevelUp:
-
-                break;
-            case GameState.StageCleared:
+            case GameState.LevelUp:
+                // LevelUp!の表示などを行っている
                 break;
             case GameState.GameOver:
+                GameOver().WrapErrors();
+                state = GameState.Result;
                 break;
             case GameState.Result:
                 break;
         }
+    }
+
+    public void GoToHome()
+    {
+        state = GameState.Waiting;
+    }
+
+    public void StartPlaying()
+    {
+        state = GameState.JustStarted;
     }
 
     bool UpdateTime()
@@ -89,38 +98,59 @@ public class Director : MonoBehaviour
         return timeLeft <= 0;
     }
 
-    void StartPlaying()
+    void InitializeGame()
     {
-        currentLevel = InitialLevel;
+        score = new Scorer();
+        examiner = new Examiner(InitialLevel);
+        spawner.Reset();
         StartLevel();
     }
 
     async Task LevelUp()
     {
-        state = GameState.DuringLevelUp;
-        await textManager.ShowLevelUp(1.3f);
+        state = GameState.LevelUp;
 
-        currentLevel++;
+        // 到達したレベルを記録として用いる (not クリアしたレベル)
+        // You reached Level x in t seconds! 的な
+        score.AddScore(MaxTime - timeLeft, examiner.CurrentLevel + 1);
+
+        audioManager.PlayLevelUp();
+        await textManager.ShowLevelUp(0.8f);
+
+        examiner.GoToNextLevel();
         StartLevel();
-        state = GameState.InTenSeconds;
     }
 
     void StartLevel()
     {
-        textManager.SetLevel(currentLevel);
-        var next = examiner.NextQuestion(currentLevel);
+        textManager.SetLevel(examiner.CurrentLevel);
+        var next = examiner.NextQuestion();
 
         progressManager.ResetProgress();
         timeLeft = MaxTime;
+        spawner.Spawn(next).WrapErrors();
         state = GameState.InTenSeconds;
-        var task = spawner.Spawn(next);
+    }
+
+    async Task GameOver()
+    {
+        Debug.Log($"{score.TimeSum} sec, {score.ReachedLevel} reached");
+        await rankingManager.SendScore("aaa", score);
+        await rankingManager.ShowRanking();
     }
 
     public async Task Input(Direction direction)
     {
+        if (state == GameState.Waiting)
+        {
+            StartPlaying();
+            return;
+        }
+        if (state != GameState.InTenSeconds) return;
+
         var relation = directionMap[direction];
         var result = examiner.Answer(relation);
-        var nextMarbleNum = examiner.NextQuestion(currentLevel);
+        var nextMarbleNum = examiner.NextQuestion();
         var goNextLevel = ProcessResult(result);
 
         await spawner.Answer(direction, relation);
@@ -141,7 +171,7 @@ public class Director : MonoBehaviour
         var next = progressManager.SetProgress(result);
         if (next)
         {
-            state = GameState.StageFinished;
+            state = GameState.LevelCleared;
         }
 
         return next;
@@ -153,9 +183,9 @@ enum GameState
     Waiting,
     JustStarted,
     InTenSeconds,
-    StageFinished,
-    StageCleared,
-    DuringLevelUp,
+    LevelCleared,
     GameOver,
     Result,
+    Ranking,
+    LevelUp,
 }

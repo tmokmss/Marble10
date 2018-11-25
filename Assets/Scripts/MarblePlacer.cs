@@ -8,24 +8,6 @@ public class MarblePlacer : MonoBehaviour
     [SerializeField] GameObject marblePrefab;
     [SerializeField] Board board;
 
-    int itemNumber;
-
-    // Use this for initialization
-    void Start()
-    {
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-    }
-
-    public void Refresh()
-    {
-        RemoveAllMarbles();
-        PlaceMarbles(itemNumber);
-    }
-
     public void RemoveAllMarbles()
     {
         var children = GetComponentsInChildren<Marble>().ToList();

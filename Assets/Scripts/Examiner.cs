@@ -2,22 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Examiner : MonoBehaviour
+public class Examiner
 {
-    int CurrentLevel;
+    public int CurrentLevel { get; private set; }
     int comboCount;
     int currentMarbleCount;
 
-    // Use this for initialization
-    void Start()
+    public Examiner(int initialLevel)
     {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        CurrentLevel = initialLevel;
     }
 
     /// <summary>
@@ -25,13 +18,17 @@ public class Examiner : MonoBehaviour
     /// </summary>
     /// <param name="nextLevel">次の質問のレベル</param>
     /// <returns>実際に表示するマーブルの数</returns>
-    public int NextQuestion(int nextLevel)
+    public int NextQuestion()
     {
-        CurrentLevel = nextLevel;
         var diff = GaussianRandom.Next(0, 1);
         currentMarbleCount = Mathf.RoundToInt(CurrentLevel + diff);
         if (currentMarbleCount <= 0) currentMarbleCount = 1;
         return currentMarbleCount;
+    }
+
+    public void GoToNextLevel()
+    {
+        ++CurrentLevel;
     }
 
     public Result Answer(Relation answer)

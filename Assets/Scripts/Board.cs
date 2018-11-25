@@ -19,10 +19,6 @@ public class Board : MonoBehaviour
         CreateColliders();
     }
 
-    void Update()
-    {
-    }
-
     void CreateColliders()
     {
         var size = plane.bounds.size;

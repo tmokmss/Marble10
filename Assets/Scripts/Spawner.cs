@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-
 /// <summary>
 /// Boardを出現させつつMarbleも配置する
 /// </summary>
@@ -14,16 +13,9 @@ public class Spawner : MonoBehaviour
 
     float duration = 0.25f;
 
-    // Use this for initialization
-    void Start()
+    public void Reset()
     {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        placer.RemoveAllMarbles();
     }
 
     public async Task Answer(Direction direction, Relation answer)

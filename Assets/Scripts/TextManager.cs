@@ -54,7 +54,7 @@ public class TextManager : MonoBehaviour
 
     public async Task ShowLevelUp(float duration)
     {
-        levelUpText.enabled = true;
+        levelUpText.gameObject.SetActive(true);
         // 位置振動させるか
         var initialPos = levelUpText.transform.position;
         var start = Time.time;
@@ -68,7 +68,7 @@ public class TextManager : MonoBehaviour
             }
             await new WaitForEndOfFrame();
         }
-        levelUpText.enabled = false;
+        levelUpText.gameObject.SetActive(false);
         levelUpText.transform.position = initialPos;
     }
 

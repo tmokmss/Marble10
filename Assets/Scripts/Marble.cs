@@ -6,11 +6,6 @@ public class Marble : MonoBehaviour
 {
     [SerializeField] Renderer sphereMesh;
 
-    // Use this for initialization
-    void Start()
-    {
-    }
-
     // Update is called once per frame
     void Update()
     {

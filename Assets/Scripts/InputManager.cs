@@ -1,15 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 public class InputManager : MonoBehaviour
 {
-    [SerializeField] MarblePlacer placer;
-    [SerializeField] Board board;
     [SerializeField] Director director;
-
-    [SerializeField, Range(0, 0.5f)] 
 
     Dictionary<KeyCode, Direction> keyMap;
 
@@ -31,15 +26,6 @@ public class InputManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // for debug
-        {
-            if (Input.GetKeyDown(KeyCode.R))
-            {
-                placer.Refresh();
-            }
-        }
-
-        var inputDirection = keyMap.Keys.Where(key => Input.GetKeyDown(key)).Select(key => keyMap[key])
-            .Take(1).Select(dir=>director.Input(dir)).ToList();
+        keyMap.Keys.Where(key => Input.GetKeyDown(key)).Select(key => keyMap[key]).Take(1).Select(dir=>director.Input(dir)).ToList();
     }
 }

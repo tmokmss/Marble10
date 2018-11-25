@@ -2,7 +2,8 @@
 {
     Right,
     Left,
-    Up
+    Up,
+    Enter
 }
 
 public enum Relation

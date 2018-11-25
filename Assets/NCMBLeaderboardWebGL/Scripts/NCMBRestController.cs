@@ -10,7 +10,7 @@ namespace NCMBRest
     public class NCMBRestController : MonoBehaviour
     {
         private static readonly string API_PROTOCOL = "https";
-        private static readonly string API_DOMAIN = "mb.api.cloud.nifty.com";
+        private static readonly string API_DOMAIN = "mbaas.api.nifcloud.com";
         private static readonly string API_VERSION = "2013-09-01";
 
         private static readonly string KEY_SIGNATURE_METHOD = "SignatureMethod";
@@ -110,7 +110,7 @@ namespace NCMBRest
                     Debug.Log("Request succeed");
                 }else{
                     //登録完了 201
-                    Debug.LogWarning("Request Failed" + request.responseCode.ToString());
+                    Debug.LogWarning($"Request Failed: {request.responseCode} {request.error}");
 
                     if (errorCallback != null)
                     {

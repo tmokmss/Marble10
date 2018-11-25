@@ -2,12 +2,16 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 
 [RequireComponent(typeof(NCMBRestController))]
 public class LeaderboardManager : MonoBehaviour
 {
+    public string MyObjectId => PlayerPrefs.GetString(OBJECT_ID);
+    public int MyHighScore => PlayerPrefs.GetInt(HIGH_SCORE);
+
     private NCMBRestController ncmbRestController;
 
     private static readonly string PLAYERNAME = "PlayerName";
@@ -19,17 +23,6 @@ public class LeaderboardManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-
-        {
-            Instance = this;
-            DontDestroyOnLoad(this.gameObject);
-        }
-        else
-        {
-            Destroy(this.gameObject);
-        }
-
         ncmbRestController = GetComponent<NCMBRestController>();
     }
 
@@ -45,7 +38,7 @@ public class LeaderboardManager : MonoBehaviour
                 if (score > PlayerPrefs.GetInt(HIGH_SCORE))
                 {
                     //レコードの更新//
-                    yield return PutScore(playerName, score, PlayerPrefs.GetString(OBJECT_ID));
+                    yield return PutScore(playerName, score, MyObjectId);
                     //ローカルのハイスコアを更新//
                     PlayerPrefs.SetInt(HIGH_SCORE, score);
                     PlayerPrefs.SetString(PLAYERNAME, playerName);
@@ -71,16 +64,19 @@ public class LeaderboardManager : MonoBehaviour
 
         string objectId = (string)postScoreCoroutine.Current;
 
-        PlayerPrefs.SetString(OBJECT_ID, objectId);//ObjectIdを保存//
-        PlayerPrefs.SetInt(HIGH_SCORE, score);//ローカルのハイスコアを保存//
-        PlayerPrefs.SetString(PLAYERNAME, playerName);//プレイヤーネームを保存 名前を変えたときのチェック用//
+        if (objectId != null)
+        {
+            PlayerPrefs.SetString(OBJECT_ID, objectId);//ObjectIdを保存//
+            PlayerPrefs.SetInt(HIGH_SCORE, score);//ローカルのハイスコアを保存//
+            PlayerPrefs.SetString(PLAYERNAME, playerName);//プレイヤーネームを保存 名前を変えたときのチェック用//
+        }
     }
 
     private IEnumerator PostScore(string playerName, int score)
     {
         Debug.Log(playerName + "のスコア" + score + "を新規投稿します。");
 
-        ScoreData scoreData = new ScoreData(playerName, score);
+        var scoreData = new ScoreDataSend { playerName = playerName, score = score };
         NCMBDataStoreParamSet paramSet = new NCMBDataStoreParamSet(scoreData);
 
         IEnumerator coroutine = ncmbRestController.Call(NCMBRestController.RequestType.POST, "classes/" + DATASTORE_CLASSNAME, paramSet);
@@ -96,24 +92,24 @@ public class LeaderboardManager : MonoBehaviour
     {
         string formerPlayerName = PlayerPrefs.GetString(PLAYERNAME);
 
-        if(formerPlayerName != playerName)
+        if (formerPlayerName != playerName)
         {
             Debug.Log("プレイヤー名が " + formerPlayerName + " から " + playerName + " に変更されました");
             PlayerPrefs.SetString(PLAYERNAME, playerName);
         }
 
-        Debug.Log(playerName+"のスコア"+score + "を更新します。レコードのID：" + objectId);
+        Debug.Log(playerName + "のスコア" + score + "を更新します。レコードのID：" + objectId);
 
-        ScoreData scoreData = new ScoreData(playerName, score);
+        var scoreData = new ScoreDataSend { playerName = playerName, score = score };
         NCMBDataStoreParamSet paramSet = new NCMBDataStoreParamSet(scoreData);
 
         IEnumerator coroutine = ncmbRestController.Call(
-            NCMBRestController.RequestType.PUT, "classes/" + DATASTORE_CLASSNAME + "/" + objectId, paramSet, 
-            (erroCode) => 
+            NCMBRestController.RequestType.PUT, "classes/" + DATASTORE_CLASSNAME + "/" + objectId, paramSet,
+            (erroCode) =>
             {
-                if(erroCode == 404)
+                if (erroCode == 404)
                 {
-                    Debug.Log("レコードID：" + objectId +"が見つからなかったため、新規レコードを作成します");
+                    Debug.Log("レコードID：" + objectId + "が見つからなかったため、新規レコードを作成します");
                     StartCoroutine(SendScoreUncheck(playerName, score));
                 }
             }
@@ -186,12 +182,14 @@ public class LeaderboardManager : MonoBehaviour
     [Serializable]
     public class ScoreData
     {
-        public ScoreData(string playerName, int score)
-        {
-            this.playerName = playerName;
-            this.score = score;
-        }
+        public string objectId;
+        public string playerName;
+        public int score;
+    }
 
+    [Serializable]
+    public class ScoreDataSend
+    {
         public string playerName;
         public int score;
     }
