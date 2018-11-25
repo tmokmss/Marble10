@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using naichilab;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,10 +9,12 @@ using static LeaderboardManager;
 
 public class RankingManager : MonoBehaviour
 {
-    public bool RankingDisplayed => canvas?.activeSelf ?? false;
+    public bool RankingDisplayed => canvas.activeSelf;
+    public int MyHighScore => slave.MyHighScore;
 
     [SerializeField] Director director;
     [SerializeField] LeaderboardManager slave;
+    [SerializeField] PleaseWait pleaseWait;
     [SerializeField] GameObject canvas;
     [SerializeField] GameObject entries;
     [SerializeField] GameObject entryPrefab;
@@ -22,6 +25,9 @@ public class RankingManager : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+#if UNITY_EDITOR
+        slave.ClearLocalData();
+#endif
         replayButton.onClick.AddListener(OnReplayButtonPressed);
         homeButton.onClick.AddListener(OnHomeButtonPressed);
         twitterButton.onClick.AddListener(OnTwitterButtonPressed);
@@ -31,7 +37,6 @@ public class RankingManager : MonoBehaviour
     void Update()
     {
         if (!RankingDisplayed) return;
-
     }
 
     void OnHomeButtonPressed()
@@ -48,7 +53,7 @@ public class RankingManager : MonoBehaviour
 
     void OnTwitterButtonPressed()
     {
-        
+        director.ToTwitter();
     }
 
     public async Task SendScore(string playerName, Scorer scorer)
@@ -59,7 +64,9 @@ public class RankingManager : MonoBehaviour
     public async Task ShowRanking()
     {
         canvas.SetActive(true);
+        pleaseWait.StartView();
         await slave.GetScoreList(100, RegisterEntries);
+        pleaseWait.Hide();
     }
 
     public void HideRanking()

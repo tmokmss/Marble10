@@ -26,6 +26,7 @@ public class AudioManager : MonoBehaviour
 
     public void StartBGM()
     {
+        Beat.Bpm = 150;
         bgmSource.Play();
     }
 

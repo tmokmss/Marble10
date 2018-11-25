@@ -6,12 +6,10 @@ using System.Threading.Tasks;
 
 public class TextManager : MonoBehaviour
 {
-    [SerializeField] TextMeshProUGUI comboText;
     [SerializeField] TextMeshProUGUI timeText;
     [SerializeField] TextMeshProUGUI instructionText;
     [SerializeField] TextMeshProUGUI levelUpText;
 
-    Vector3 comboTextInitialPosition;
     Vector3 timeTextInitialPosition;
     Vector3 instructionTextInitialPosition;
     float instructionTextInitialSize;
@@ -19,7 +17,6 @@ public class TextManager : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        comboTextInitialPosition = comboText.transform.position;
         timeTextInitialPosition = timeText.transform.position;
         instructionTextInitialPosition = instructionText.transform.position;
 
@@ -32,16 +29,6 @@ public class TextManager : MonoBehaviour
         DopeBeat();
     }
 
-    public void SetCombo(int comboNum)
-    {
-        if (comboNum <= 1)
-        {
-            comboText.SetText("");
-            return;
-        }
-        comboText.SetText($"<size=50>x </size>{comboNum}");
-    }
-
     public void SetTime(float timeLeft)
     {
         timeText.SetText($"{timeLeft:f2}");
@@ -50,6 +37,27 @@ public class TextManager : MonoBehaviour
     public void SetLevel(int currentLevel)
     {
         instructionText.SetText($"||\n< {currentLevel} <");
+    }
+
+    public void SetLevel(int currentLevel, string colorCode)
+    {
+        instructionText.SetText($"||\n< <color={colorCode}>{currentLevel}</color> <");
+    }
+
+    public void SetLevel(int currentLevel, string colorCode, Relation target)
+    {
+        switch (target)
+        {
+            case Relation.Equal:
+                instructionText.SetText($"<color={colorCode}>||</color>\n< {currentLevel} <");
+                break;
+            case Relation.Larger:
+                instructionText.SetText($"||\n< {currentLevel} <color={colorCode}><</color>");
+                break;
+            case Relation.Smaller:
+                instructionText.SetText($"||\n<color={colorCode}><</color> {currentLevel} <");
+                break;
+        }
     }
 
     public async Task ShowLevelUp(float duration)
@@ -75,13 +83,11 @@ public class TextManager : MonoBehaviour
     void DopeBeat()
     {
         var dilate = Beat.Sine(0.05f, 0.15f);
-        comboText.fontSharedMaterial.SetFloat("_FaceDilate", dilate);
         timeText.fontSharedMaterial.SetFloat("_FaceDilate", dilate);
 
         // なぜZに1たさないといけないかはよくわからん
         // Screen Space - CameraでCanvasを描画するようにしたら必要になった
         var posDiff = new Vector3(0, Beat.Sine(0, 0.10f), 1);
-        comboText.transform.position = comboTextInitialPosition + posDiff;
         timeText.transform.position = timeTextInitialPosition + posDiff;
         instructionText.transform.position = instructionTextInitialPosition + new Vector3(0, 0, 1);
 

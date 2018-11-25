@@ -16,12 +16,6 @@ public class ProgressManager : MonoBehaviour
         SetProgress(Result.Wrong);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
     /// <summary>
     /// 
     /// </summary>
@@ -29,7 +23,7 @@ public class ProgressManager : MonoBehaviour
     /// <returns>規定の成功回数に達したならば真</returns>
     public bool SetProgress(Result result)
     {
-        currentProgress += result == Result.Correct ? 1 : -1;
+        currentProgress += result == Result.Correct ? 1 : -currentProgress;
         if (currentProgress < 0) currentProgress = 0;
         bars.Select((bar, i) => new { bar, i }).ToList().ForEach(p => ChangeBarColor(p.bar, GetBarColor(p.i < currentProgress)));
         return currentProgress >= maxCount;

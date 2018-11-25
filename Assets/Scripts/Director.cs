@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -8,25 +9,28 @@ public class Director : MonoBehaviour
     [SerializeField, Range(-1, 1)] float offset;
     [SerializeField, Range(30, 200)] int bpm;
 
+    [SerializeField] TutorialDirector tutorialDirector;
     [SerializeField] Spawner spawner;
     [SerializeField] TextManager textManager;
     [SerializeField] AudioManager audioManager;
     [SerializeField] ProgressManager progressManager;
     [SerializeField] RankingManager rankingManager;
+    [SerializeField] SubmitManager submitManager;
 
     readonly float MaxTime = 10f;
     readonly int InitialLevel = 4;
 
     GameState state;
-    Scorer score;
     Examiner examiner;
-    int currentCombo;
+    Scorer score;
     Dictionary<Direction, Relation> directionMap;
     float timeLeft;
 
     // Use this for initialization
     void Start()
     {
+        TwitterUtility.director = this;
+
         Beat.Bpm = bpm;
         Beat.Offset = offset;
 
@@ -36,7 +40,7 @@ public class Director : MonoBehaviour
             [Direction.Left] = Relation.Smaller,
             [Direction.Right] = Relation.Larger
         };
-        state = GameState.Waiting;
+        state = GameState.Tutorial;
     }
 
     // Update is called once per frame
@@ -47,7 +51,10 @@ public class Director : MonoBehaviour
 
         switch (state)
         {
-            case GameState.Waiting:
+            case GameState.Tutorial:
+                BeginTutorial();
+                break;
+            case GameState.WaitForTutorial:
                 break;
             case GameState.JustStarted:
                 InitializeGame();
@@ -69,22 +76,45 @@ public class Director : MonoBehaviour
                 // LevelUp!の表示などを行っている
                 break;
             case GameState.GameOver:
-                GameOver().WrapErrors();
-                state = GameState.Result;
+                GameOver();
                 break;
             case GameState.Result:
+                // 状態遷移はsubmitManagerに任せる
+                break;
+            case GameState.Ranking:
+                // 状態遷移はrankingManagerに任せる
                 break;
         }
     }
 
     public void GoToHome()
     {
-        state = GameState.Waiting;
+        state = GameState.Tutorial;
     }
 
     public void StartPlaying()
     {
         state = GameState.JustStarted;
+    }
+
+    public void GoToRanking()
+    {
+        state = GameState.Ranking;
+        ShowRanking().WrapErrors();
+    }
+
+    void BeginTutorial()
+    {
+        Beat.Bpm = 60;
+        tutorialDirector.BeginTutorial();
+    }
+
+    async Task EndTutorialAndPlay()
+    {
+        Beat.Bpm = 0;
+        state = GameState.WaitForTutorial;
+        await tutorialDirector.TerminateTutorial();
+        StartPlaying();
     }
 
     bool UpdateTime()
@@ -132,18 +162,28 @@ public class Director : MonoBehaviour
         state = GameState.InTenSeconds;
     }
 
-    async Task GameOver()
+    void GameOver()
     {
-        Debug.Log($"{score.TimeSum} sec, {score.ReachedLevel} reached");
-        await rankingManager.SendScore("aaa", score);
+        submitManager.ShowSubmitModal(score, rankingManager.MyHighScore);
+        state = GameState.Result;
+    }
+
+    async Task ShowRanking()
+    {
         await rankingManager.ShowRanking();
+    }
+
+    public void ToTwitter()
+    {
+        var tweet = $"レベル{score.ReachedLevel}に{score.TimeSum:f2}秒で到達しました！";
+        naichilab.UnityRoomTweet.Tweet("marble10", tweet, "unityroom", "unity1week");
     }
 
     public async Task Input(Direction direction)
     {
-        if (state == GameState.Waiting)
+        if (state == GameState.Tutorial)
         {
-            StartPlaying();
+            EndTutorialAndPlay().WrapErrors();
             return;
         }
         if (state != GameState.InTenSeconds) return;
@@ -153,20 +193,13 @@ public class Director : MonoBehaviour
         var nextMarbleNum = examiner.NextQuestion();
         var goNextLevel = ProcessResult(result);
 
-        await spawner.Answer(direction, relation);
+        await spawner.Swipe(direction);
         if (!goNextLevel)
             await spawner.Spawn(nextMarbleNum);
     }
 
     bool ProcessResult(Result result)
     {
-        if (result == Result.Correct)
-        {
-            currentCombo++;
-        } else
-        {
-            currentCombo = 0;
-        }
         audioManager.PlayAnswer(result);
         var next = progressManager.SetProgress(result);
         if (next)
@@ -176,16 +209,23 @@ public class Director : MonoBehaviour
 
         return next;
     }
+
+    public async Task SubmitToRanking(string userName)
+    {
+        audioManager.PlayAnswer(Result.Correct);
+        await rankingManager.SendScore(userName, score);
+    }
 }
 
 enum GameState
 {
-    Waiting,
+    Tutorial,
+    WaitForTutorial,
     JustStarted,
     InTenSeconds,
     LevelCleared,
+    LevelUp,
     GameOver,
     Result,
     Ranking,
-    LevelUp,
 }

@@ -5,7 +5,6 @@ using UnityEngine;
 public class Examiner
 {
     public int CurrentLevel { get; private set; }
-    int comboCount;
     int currentMarbleCount;
 
     public Examiner(int initialLevel)

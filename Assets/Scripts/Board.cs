@@ -37,7 +37,6 @@ public class Board : MonoBehaviour
         left.size = new Vector2(collisionWidth, size.y + collisionWidth);
         right.offset = new Vector2((size.x + collisionWidth) / 2, 0);
         right.size = new Vector2(collisionWidth, size.y + collisionWidth);
-        up.enabled = false;
     }
 
     public async Task Spawn(float duration)

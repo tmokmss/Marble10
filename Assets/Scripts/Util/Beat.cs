@@ -8,6 +8,8 @@ public static class Beat
 
     public static float Sine(float center, float amplitude)
     {
+        if (Bpm == 0) return 0;
+
         var frequency = Bpm / 60f;
         var period = 1 / frequency;
         var omega = 2 * Mathf.PI * frequency;
