@@ -14,7 +14,7 @@ public class SubmitManager : MonoBehaviour
     [SerializeField] Canvas canvas;
     [SerializeField] TextMeshProUGUI titleText;
     [SerializeField] TextMeshProUGUI fieldLabel;
-    [SerializeField] TMP_InputField inputField;
+    [SerializeField] TMP_InputField nameField;
     [SerializeField] GameObject inputItem;
     [SerializeField] Button homeButton;
     [SerializeField] Button replayButton;
@@ -29,7 +29,7 @@ public class SubmitManager : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        inputField.onEndEdit.AddListener(StartToSubmit);
+        nameField.onEndEdit.AddListener(StartToSubmit);
 
         replayButton.onClick.AddListener(OnReplayButtonPressed);
         homeButton.onClick.AddListener(OnHomeButtonPressed);
@@ -72,18 +72,16 @@ public class SubmitManager : MonoBehaviour
         canvas.gameObject.SetActive(false);
     }
 
-    public void ShowSubmitModal(Scorer score, int bestScore)
+    public void ShowSubmitModal(Scorer score, int bestScore, string name)
     {
         Initialize();
         titleText.text = $@"You Reached
 Level <color=#ffff00><size=70>{score.ReachedLevel}</size></color> in
 <color=#ffff00><size=70>{score.TimeSum:f2}</size></color> seconds";
         canvas.gameObject.SetActive(true);
-        isHighScore = score.Encode() < bestScore;
-        if (isHighScore)
-        {
-            inputItem.SetActive(false);
-        }
+        isHighScore = score.Encode() > bestScore;
+        inputItem.SetActive(isHighScore);
+        if (name != "") nameField.text = name;
     }
 
     void StartToSubmit(string name)

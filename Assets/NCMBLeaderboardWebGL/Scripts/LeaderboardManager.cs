@@ -10,6 +10,7 @@ using UnityEngine.Events;
 public class LeaderboardManager : MonoBehaviour
 {
     public string MyObjectId => PlayerPrefs.GetString(OBJECT_ID);
+    public string MyName => PlayerPrefs.GetString(PLAYERNAME) ?? "";
     public int MyHighScore => PlayerPrefs.GetInt(HIGH_SCORE);
 
     private NCMBRestController ncmbRestController;
@@ -17,7 +18,11 @@ public class LeaderboardManager : MonoBehaviour
     private static readonly string PLAYERNAME = "PlayerName";
     private static readonly string OBJECT_ID = "ObjectId";
     private static readonly string HIGH_SCORE = "HighScore";
+#if UNITY_EDITOR
+    private static readonly string DATASTORE_CLASSNAME = "LeaderboardDebug"; //スコアを保存するデータストア名//
+#else 
     private static readonly string DATASTORE_CLASSNAME = "Leaderboard"; //スコアを保存するデータストア名//
+#endif
 
     public static LeaderboardManager Instance { get; private set; }
 

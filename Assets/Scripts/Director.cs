@@ -17,8 +17,13 @@ public class Director : MonoBehaviour
     [SerializeField] RankingManager rankingManager;
     [SerializeField] SubmitManager submitManager;
 
+#if UNITY_EDITOR
+    readonly float MaxTime = 5f;
+    readonly int InitialLevel = 2;
+#else
     readonly float MaxTime = 10f;
     readonly int InitialLevel = 4;
+#endif
 
     GameState state;
     Examiner examiner;
@@ -164,7 +169,7 @@ public class Director : MonoBehaviour
 
     void GameOver()
     {
-        submitManager.ShowSubmitModal(score, rankingManager.MyHighScore);
+        submitManager.ShowSubmitModal(score, rankingManager.MyHighScore, rankingManager.MyName);
         state = GameState.Result;
     }
 

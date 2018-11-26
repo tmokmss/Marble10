@@ -11,6 +11,7 @@ public class RankingManager : MonoBehaviour
 {
     public bool RankingDisplayed => canvas.activeSelf;
     public int MyHighScore => slave.MyHighScore;
+    public string MyName => slave.MyName;
 
     [SerializeField] Director director;
     [SerializeField] LeaderboardManager slave;
@@ -21,6 +22,8 @@ public class RankingManager : MonoBehaviour
     [SerializeField] Button homeButton;
     [SerializeField] Button replayButton;
     [SerializeField] Button twitterButton;
+
+    bool isFetching;
 
     // Use this for initialization
     void Start()
@@ -63,10 +66,13 @@ public class RankingManager : MonoBehaviour
 
     public async Task ShowRanking()
     {
+        if (isFetching) return;
+        isFetching = true;
         canvas.SetActive(true);
         pleaseWait.StartView();
         await slave.GetScoreList(100, RegisterEntries);
         pleaseWait.Hide();
+        isFetching = false;
     }
 
     public void HideRanking()
